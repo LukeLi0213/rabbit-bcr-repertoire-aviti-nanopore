@@ -99,6 +99,12 @@ command -v cutadapt &>/dev/null || error "找不到 cutadapt"
 mkdir -p "$CHUNK_DIR1" "$CHUNK_DIR2" "$TMP_DIR"
 [ -f "${OUT_DIR1}/chunk_stats.csv" ] || echo "chunk,raw_pairs,demux,r1only_trimmed,r2only_trimmed" > "${OUT_DIR1}/chunk_stats.csv"
 check_fingerprint "${OUT_DIR1}/demux.input_fingerprint"
+# 已經完整跑完（有 demux.complete、輸入指紋相同）就整個跳過：IGL 會清掉 chunks/，若照 .done 判斷會整份重做，
+# 而重做又會讓下游以為上游更新了而跟著重跑。要強制重做請刪除 demux.complete。
+if [ -f "${OUT_DIR1}"/demux.complete ] && [ -f "${OUT_DIR2}"/demux.complete ]; then
+    info "demux 先前已完整完成（demux.complete），略過；若要重做請先刪除 demux.complete"
+    exit 0
+fi
 rm -f "${OUT_DIR1}"/demux.complete   # 跑完全部 chunk 後才重新寫入；下游 igblast 步驟會檢查它
 rm -f "${OUT_DIR2}"/demux.complete   # 跑完全部 chunk 後才重新寫入；下游 igblast 步驟會檢查它
 

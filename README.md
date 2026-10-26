@@ -131,6 +131,27 @@ sequences from OAS, simulated AVITI/Nanopore reads with known truth, bash 3.2).
 * **Nanopore**: `cutadapt -n 2` so both the TSO and the primer are removed when both are present
   (the default removes only one adapter per read).
 
+### Using the fixed scripts on results produced by the old scripts
+
+Script names, arguments, output file names and `qc_stats.json` keys are unchanged. The new
+scripts, however, only trust results that carry a completion marker, so on an existing results
+folder do this once:
+
+```bash
+# 1. keep the old stitched results for comparison
+for d in "$BCR_PIPELINE_ROOT"/results/15651-LT-*_Aviti24/IG?_Stitched; do mv "$d" "${d}_old"; done
+# 2. mark the existing demux / R1-only / R2-only results as complete (only if you trust them)
+bash scripts/mark_existing_results_complete.sh --skip-stitched
+# 3. re-run only stitching + the third IgBLAST pass
+python scripts/02g_stitch_qc_igh.py 1 && bash scripts/02h_stitch_igblast.sh 1     # each rabbit
+bash scripts/run_igk_full_pipeline.sh && bash scripts/run_igl_full_pipeline.sh     # skips demux/R1/R2
+```
+
+Without step 2 the new stages stop with a message instead of trusting unmarked old files
+(`BCR_SKIP_UPSTREAM_CHECK=1` also bypasses the upstream check). To measure how much the stitching
+fix changes the existing data before re-running anything, use
+`tests/e2e/compare_stitch_methods.py R1only.airr.tsv R2only.airr.tsv IGHV.fasta`.
+
 ## Scripts
 
 ### Upstream: demuxing, QC, IgBLAST

@@ -208,6 +208,7 @@ def test_demux_rerun_does_not_duplicate_stats(sandbox):
     _demux_inputs(sandbox, 2500)   # 3 chunks with the shrunken chunk size
     assert sandbox.run("02c_run_aviti_r2only_igh.sh", 1).returncode == 0
     os.remove(sandbox.path("15651-LT-1_Aviti24", "IGH_R2only", "chunks", "chunk_001.done"))
+    os.remove(sandbox.path("15651-LT-1_Aviti24", "IGH_R2only", "demux.complete"))   # an interrupted run has none
     assert sandbox.run("02c_run_aviti_r2only_igh.sh", 1).returncode == 0
     with open(sandbox.path("15651-LT-1_Aviti24", "IGH_R2only", "chunk_stats.csv")) as f:
         idx = [line.split(",")[0] for line in f.read().splitlines()[1:]]
